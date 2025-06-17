@@ -1,0 +1,30 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/go
+{
+	"name": "go-solitaire",
+	"dockerComposeFile": [
+		"docker-compose.yaml",
+		"docker-compose.gpu.yaml"
+	],
+	"service": "go-solitaire-dev",
+	"workspaceFolder": "/workspaces/go-solitaire",
+	"containerEnv": {
+		"WORKSPACE_DIR": "${containerWorkspaceFolder}"
+	},
+	"remoteEnv": {},
+	"remoteUser": "vscode",
+	"shutdownAction": "none",
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [],
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "go version",
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"extensions": []
+		}
+	},
+	"mounts": [
+		"type=bind,source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,readonly"
+	]
+}

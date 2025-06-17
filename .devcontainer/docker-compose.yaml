@@ -1,0 +1,31 @@
+services:
+    go-solitaire-dev:
+        container_name: go_solitaire_dev
+        build:
+            context: ../
+            dockerfile: ./Dockerfile
+        volumes:
+            - ..:/workspaces/go-solitaire:cached
+            - /dev:/dev:rw
+            - ${HOME}/.Xauthority:/home/vscode/.Xauthority:rw
+        environment:
+            DISPLAY: ${DISPLAY}
+        network_mode: "host"
+        privileged: true
+        cap_add:
+            - SYS_ADMIN
+            # Allows container process to change process priority
+            - SYS_NICE
+            # [Optional] Required for ptrace-based debuggers like C++, Go, and Rust
+            - SYS_PTRACE
+        security_opt:
+            - seccomp:unconfined
+        ulimits:
+            rtprio: 99
+        command: ""
+        entrypoint: /bin/bash -c "sleep inf"
+        group_add:
+            - dialout
+            - plugdev
+            - video
+            - audio

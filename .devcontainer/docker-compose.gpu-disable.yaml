@@ -1,0 +1,4 @@
+services:
+  go-solitaire-dev:
+    environment:
+      - HAS_GPU=disable
