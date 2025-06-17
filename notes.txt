@@ -1,3 +1,6 @@
 - https://hub.docker.com/r/microsoft/devcontainers-go
 - https://github.com/hajimehoshi/ebiten
 - https://stackoverflow.com/questions/44429394/x11-forwarding-of-a-gui-app-running-in-docker
+- https://ebitengine.org/en/tour/hello_world.html
+- https://pkg.go.dev/github.com/hajimehoshi/ebiten/v2#section-readme
+- https://stackoverflow.com/questions/49594259/reading-image-in-go
