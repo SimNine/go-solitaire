@@ -39,8 +39,8 @@ func main() {
 
 	// Create the game instance, init, and run it
 	ebitengineGame := &Game{
-		windowSize:       util.Dims{X: 800, Y: 800},
-		windowRenderDims: util.Dims{X: 400, Y: 400},
+		windowSize:       util.Dims{X: 1000, Y: 800},
+		windowRenderDims: util.Dims{X: 500, Y: 400},
 		board:            game.NewBoard(),
 	}
 	ebitengineGame.Init()

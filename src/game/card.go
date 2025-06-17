@@ -98,15 +98,18 @@ func MakeCard(
 ) *Card {
 	image := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
 	image.Fill(color.RGBA{
-		R: 0,
-		G: 100,
-		B: 0,
+		R: 255,
+		G: 255,
+		B: 255,
 		A: 255,
 	})
 
 	// Draw the number on the card in each corner
 	numberSymbol := NumberSymbols[number]
 	textOps := &text.DrawOptions{}
+	textOps.ColorScale.SetR(0.0)
+	textOps.ColorScale.SetG(0.0)
+	textOps.ColorScale.SetB(0.0)
 	text.Draw(
 		image,
 		numberSymbol,
@@ -128,6 +131,9 @@ func MakeCard(
 	// Draw the suit in the center of the card
 	suitSymbol := SuitSymbols[suit]
 	suitOps := &text.DrawOptions{}
+	suitOps.ColorScale.SetR(0.0)
+	suitOps.ColorScale.SetG(0.0)
+	suitOps.ColorScale.SetB(0.0)
 	suitOps.GeoM.Translate(
 		float64(DEFAULT_CARD_WIDTH)/2-suitTextface.Size/4,
 		float64(DEFAULT_CARD_HEIGHT)/2-suitTextface.Size/2,
@@ -158,4 +164,8 @@ func (c *Card) Draw(screen *ebiten.Image) {
 	} else {
 		screen.DrawImage(c.image, op)
 	}
+}
+
+func (c *Card) String() string {
+	return NumberSymbols[c.Number] + SuitSymbols[c.Suit]
 }
