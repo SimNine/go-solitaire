@@ -1,2 +1,2 @@
 ./build.sh
-./dist/go-solitaire
+./dist/src
