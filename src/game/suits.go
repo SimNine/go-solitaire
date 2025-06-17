@@ -8,3 +8,10 @@ const (
 	Club    Suit = "club"
 	Heart   Suit = "heart"
 )
+
+var SuitSymbols = map[Suit]string{
+	Spade:   "♠",
+	Diamond: "♦",
+	Club:    "♣",
+	Heart:   "♥",
+}

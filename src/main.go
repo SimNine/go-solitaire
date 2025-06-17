@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -9,10 +10,6 @@ import (
 )
 
 type Game struct {
-	wordsPos    util.Pos
-	xIncreasing bool
-	yIncreasing bool
-
 	windowSize       util.Dims
 	windowRenderDims util.Dims
 
@@ -25,33 +22,19 @@ func (g *Game) Init() {
 }
 
 func (g *Game) Update() error {
-	if g.xIncreasing {
-		g.wordsPos.X += 1
-	} else {
-		g.wordsPos.X -= 1
-	}
-	if g.yIncreasing {
-		g.wordsPos.Y += 1
-	} else {
-		g.wordsPos.Y -= 1
-	}
-
-	if g.wordsPos.X > g.windowRenderDims.X {
-		g.xIncreasing = false
-	} else if g.wordsPos.X <= 0 {
-		g.xIncreasing = true
-	}
-	if g.wordsPos.Y > g.windowRenderDims.Y {
-		g.yIncreasing = false
-	} else if g.wordsPos.Y <= 0 {
-		g.yIncreasing = true
-	}
-
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// ebitenutil.DebugPrintAt(screen, "ayoooo", g.wordsPos.X, g.wordsPos.Y)
+	// Fill the background with the board color
+	screen.Fill(color.RGBA{
+		R: 0,
+		G: 75,
+		B: 0,
+		A: 255,
+	})
+
+	// Draw the test card
 	g.testCard.Draw(screen)
 }
 
@@ -62,11 +45,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 func main() {
 
 	game := &Game{
-		wordsPos:         util.Pos{X: 0, Y: 0},
-		xIncreasing:      true,
-		yIncreasing:      true,
-		windowSize:       util.Dims{X: 600, Y: 200},
-		windowRenderDims: util.Dims{X: 300, Y: 100},
+		windowSize:       util.Dims{X: 800, Y: 800},
+		windowRenderDims: util.Dims{X: 400, Y: 400},
 		testCard:         game.MakeCard(game.Five, game.Club),
 	}
 	game.Init()
