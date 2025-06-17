@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -13,10 +12,11 @@ type Game struct {
 	windowSize       util.Dims
 	windowRenderDims util.Dims
 
-	testCard *game.Card
+	board *game.Board
 }
 
 func (g *Game) Init() {
+	// Set the window size and title
 	ebiten.SetWindowTitle("Solitaire")
 	ebiten.SetWindowSize(g.windowSize.X, g.windowSize.Y)
 }
@@ -26,16 +26,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Fill the background with the board color
-	screen.Fill(color.RGBA{
-		R: 0,
-		G: 75,
-		B: 0,
-		A: 255,
-	})
-
-	// Draw the test card
-	g.testCard.Draw(screen)
+	g.board.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -43,14 +34,17 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
+	// Initialize the game assets
+	game.InitCards()
 
-	game := &Game{
+	// Create the game instance, init, and run it
+	ebitengineGame := &Game{
 		windowSize:       util.Dims{X: 800, Y: 800},
 		windowRenderDims: util.Dims{X: 400, Y: 400},
-		testCard:         game.MakeCard(game.Five, game.Club),
+		board:            game.NewBoard(),
 	}
-	game.Init()
-	if err := ebiten.RunGame(game); err != nil {
+	ebitengineGame.Init()
+	if err := ebiten.RunGame(ebitengineGame); err != nil {
 		log.Fatal(err)
 	}
 }

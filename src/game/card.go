@@ -1,6 +1,7 @@
 package game
 
 import (
+	"image"
 	"image/color"
 	"log"
 	"math"
@@ -20,22 +21,11 @@ const DEFAULT_SUIT_SIZE = 40.0
 
 var numberTextface *text.GoTextFace = nil
 var suitTextface *text.GoTextFace = nil
+var cardbackImage *ebiten.Image = nil
 
-func MakeCard(
-	number Number,
-	suit Suit,
-) *Card {
-
-	image := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
-	image.Fill(color.RGBA{
-		R: 0,
-		G: 100,
-		B: 0,
-		A: 255,
-	})
-
+func InitCards() {
 	// Load font file
-	reader, err := os.Open("unifont-16.0.04.otf")
+	reader, err := os.Open("assets/unifont-16.0.04.otf")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,23 +37,72 @@ func MakeCard(
 		log.Fatal(err)
 	}
 
-	// Create a new text face if not already set
-	if numberTextface == nil {
-		numberTextface = &text.GoTextFace{
-			Source:    font,
-			Direction: text.DirectionLeftToRight,
-			Size:      DEFAULT_NUMBER_SIZE,
-			Language:  language.English,
-		}
+	// Create the textfaces
+	numberTextface = &text.GoTextFace{
+		Source:    font,
+		Direction: text.DirectionLeftToRight,
+		Size:      DEFAULT_NUMBER_SIZE,
+		Language:  language.English,
 	}
-	if suitTextface == nil {
-		suitTextface = &text.GoTextFace{
-			Source:    font,
-			Direction: text.DirectionLeftToRight,
-			Size:      DEFAULT_SUIT_SIZE,
-			Language:  language.English,
-		}
+	suitTextface = &text.GoTextFace{
+		Source:    font,
+		Direction: text.DirectionLeftToRight,
+		Size:      DEFAULT_SUIT_SIZE,
+		Language:  language.English,
 	}
+
+	// Load the card back image
+	reader, err = os.Open("assets/card_back.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer reader.Close()
+
+	// Decode the image
+	image, _, err := image.Decode(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Convert the image to an ebiten.Image
+	cardbackImage = ebiten.NewImageFromImage(image)
+
+	// Scale the card back image to fit the default card dimensions
+	ops := &ebiten.DrawImageOptions{}
+	bounds := cardbackImage.Bounds().Size()
+	xRatio := float64(bounds.X) / float64(DEFAULT_CARD_WIDTH)
+	yRatio := float64(bounds.Y) / float64(DEFAULT_CARD_HEIGHT)
+	ops.GeoM.Scale(1/xRatio, 1/yRatio)
+	cardbackImageCanvas := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+	cardbackImageCanvas.DrawImage(
+		cardbackImage,
+		ops,
+	)
+
+	// Set the cardbackImage to the scaled image
+	cardbackImage = cardbackImageCanvas
+}
+
+type Card struct {
+	Number  Number
+	Suit    Suit
+	IsShown bool
+
+	image *ebiten.Image
+	pos   util.Pos
+}
+
+func MakeCard(
+	number Number,
+	suit Suit,
+) *Card {
+	image := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+	image.Fill(color.RGBA{
+		R: 0,
+		G: 100,
+		B: 0,
+		A: 255,
+	})
 
 	// Draw the number on the card in each corner
 	numberSymbol := NumberSymbols[number]
@@ -102,23 +141,21 @@ func MakeCard(
 
 	// Return the card with the complete image
 	return &Card{
-		Number: number,
-		Suit:   suit,
-		image:  image,
-		pos:    util.Pos{X: 50, Y: 100},
+		Number:  number,
+		Suit:    suit,
+		IsShown: true,
+		image:   image,
+		pos:     util.Pos{X: 50, Y: 100},
 	}
-}
-
-type Card struct {
-	Number Number
-	Suit   Suit
-
-	image *ebiten.Image
-	pos   util.Pos
 }
 
 func (c *Card) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(c.pos.X), float64(c.pos.Y))
-	screen.DrawImage(c.image, op)
+	if !c.IsShown {
+		// If the card is not shown, draw the card back
+		screen.DrawImage(cardbackImage, op)
+	} else {
+		screen.DrawImage(c.image, op)
+	}
 }
