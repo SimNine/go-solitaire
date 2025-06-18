@@ -13,11 +13,11 @@ import (
 	"urffer.xyz/go-solitaire/src/util"
 )
 
-const DEFAULT_CARD_WIDTH = 50
-const DEFAULT_CARD_HEIGHT = 70
+const DEFAULT_CARD_WIDTH = 120
+const DEFAULT_CARD_HEIGHT = 168
 
-const DEFAULT_NUMBER_SIZE = 20.0
-const DEFAULT_SUIT_SIZE = 40.0
+const DEFAULT_NUMBER_SIZE = 30.0
+const DEFAULT_SUIT_SIZE = 60.0
 
 var numberTextface *text.GoTextFace = nil
 var suitTextface *text.GoTextFace = nil

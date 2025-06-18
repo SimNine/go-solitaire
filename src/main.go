@@ -36,12 +36,12 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 func main() {
 	// Initialize the game assets
 	game.InitCards()
-	game.InitBoardGfx()
+	game.InitCardStackBkg()
 
 	// Create the game instance, init, and run it
 	ebitengineGame := &Game{
 		windowSize:       util.Dims{X: 1000, Y: 800},
-		windowRenderDims: util.Dims{X: 500, Y: 400},
+		windowRenderDims: util.Dims{X: 1000, Y: 800},
 		board:            game.NewBoard(),
 	}
 	ebitengineGame.Init()

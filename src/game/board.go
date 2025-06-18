@@ -8,31 +8,17 @@ import (
 	"urffer.xyz/go-solitaire/src/util"
 )
 
-var placeholderImage *ebiten.Image = nil
-
 const DEFAULT_CARD_SPACING = 10
+const DEFAULT_CARD_INTERPILE_SPACING = 20
 
 var POS_DRAW_PILE = util.Pos{
 	X: DEFAULT_CARD_SPACING,
 	Y: DEFAULT_CARD_SPACING,
 }
-
-// var POS_OVERTURNED_PILE = util.Pos{
-
-// var POS_OVERTURNED_PILE = util.Pos{
-// 	X: DEFAULT_CARD_SPACING + DEFAULT_CARD_WIDTH + DEFAULT_CARD_SPACING,
-// 	Y: DEFAULT_CARD_SPACING,
-// }
-
-func InitBoardGfx() {
-	placeholderImage = ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
-	placeholderImage.Fill(color.RGBA{
-		R: 0,
-		G: 150,
-		B: 0,
-		A: 255,
-	})
-}
+var POS_OVERTURNED_PILE = POS_DRAW_PILE.Translate(
+	DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING,
+	0,
+)
 
 func NewBoard() *Board {
 	// Create a deck of cards
@@ -50,15 +36,15 @@ func NewBoard() *Board {
 	}
 
 	// Distribute the cards into the working stacks
-	workingStacks := [7][]*Card{}
+	workingStacks := [7]*CardStack{}
 	for i := 0; i < 7; i++ {
-		currStack := &workingStacks[i]
+		currStack := &[]*Card{}
 		for j := 0; j <= i; j++ {
 			var card *Card
 			card, deck = deck[0], deck[1:]
 			card.pos = util.Pos{
 				X: DEFAULT_CARD_SPACING + i*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
-				Y: DEFAULT_CARD_SPACING + j*DEFAULT_CARD_SPACING + (DEFAULT_CARD_HEIGHT + DEFAULT_CARD_SPACING*2),
+				Y: DEFAULT_CARD_SPACING + DEFAULT_CARD_HEIGHT + DEFAULT_CARD_SPACING + j*DEFAULT_CARD_INTERPILE_SPACING,
 			}
 			if j == i {
 				card.IsShown = true // Only the last card in each stack is shown
@@ -67,29 +53,46 @@ func NewBoard() *Board {
 			}
 			*currStack = append(*currStack, card)
 		}
+		workingStacks[i] = &CardStack{
+			Cards:     *currStack,
+			RenderAll: true,
+			BasePos: POS_DRAW_PILE.Translate(
+				i*(DEFAULT_CARD_SPACING+DEFAULT_CARD_WIDTH),
+				DEFAULT_CARD_HEIGHT+DEFAULT_CARD_SPACING,
+			),
+		}
 	}
 
 	// Put the rest of the deck into the draw pile
-	drawPile := deck
-	for _, card := range drawPile {
+	drawPileCards := deck
+	for _, card := range drawPileCards {
 		card.pos = POS_DRAW_PILE
 		card.IsShown = false
+	}
+	drawPile := &CardStack{
+		Cards:     drawPileCards,
+		RenderAll: false,
+		BasePos:   POS_DRAW_PILE,
 	}
 
 	// Create the board with suit piles, working stacks, and empty draw and overturned piles
 	return &Board{
-		suitPiles:      make(map[Suit][]*Card),
-		workingStacks:  workingStacks,
-		drawPile:       drawPile,
-		overturnedPile: []*Card{},
+		suitPiles:     make(map[Suit]*CardStack),
+		workingStacks: workingStacks,
+		drawPile:      drawPile,
+		overturnedPile: &CardStack{
+			Cards:     []*Card{},
+			RenderAll: false,
+			BasePos:   POS_OVERTURNED_PILE,
+		},
 	}
 }
 
 type Board struct {
-	suitPiles      map[Suit]([]*Card)
-	workingStacks  [7][]*Card
-	drawPile       []*Card
-	overturnedPile []*Card
+	suitPiles      map[Suit](*CardStack)
+	workingStacks  [7]*CardStack
+	drawPile       *CardStack
+	overturnedPile *CardStack
 }
 
 func (b *Board) Draw(screen *ebiten.Image) {
@@ -101,26 +104,14 @@ func (b *Board) Draw(screen *ebiten.Image) {
 		A: 255,
 	})
 
-	// Draw all cards on the screen
+	// Draw all working stacks
 	for _, stack := range b.workingStacks {
-		for _, card := range stack {
-			card.Draw(screen)
-		}
+		stack.Draw(screen)
 	}
 
-	// Render the top card of the draw pile if it exists
-	if len(b.drawPile) > 0 {
-		topCard := b.drawPile[0]
-		topCard.Draw(screen)
-	}
+	// Draw the draw pile
+	b.drawPile.Draw(screen)
 
-	// Render the overturned pile cards
-	if len(b.overturnedPile) > 0 {
-		// do stuff
-	} else {
-		// Draw a placeholder image for the overturned pile
-		opts := &ebiten.DrawImageOptions{}
-		opts.GeoM.Translate(10+DEFAULT_CARD_WIDTH+10, 10)
-		screen.DrawImage(placeholderImage, opts)
-	}
+	// Draw the overturned pile
+	b.overturnedPile.Draw(screen)
 }
