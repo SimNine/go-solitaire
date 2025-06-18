@@ -107,9 +107,17 @@ func MakeCard(
 	// Draw the number on the card in each corner
 	numberSymbol := NumberSymbols[number]
 	textOps := &text.DrawOptions{}
-	textOps.ColorScale.SetR(0.0)
-	textOps.ColorScale.SetG(0.0)
-	textOps.ColorScale.SetB(0.0)
+	if suit == Heart || suit == Diamond {
+		// Red suits
+		textOps.ColorScale.SetR(1.0)
+		textOps.ColorScale.SetG(0.0)
+		textOps.ColorScale.SetB(0.0)
+	} else {
+		// Black suits
+		textOps.ColorScale.SetR(0.0)
+		textOps.ColorScale.SetG(0.0)
+		textOps.ColorScale.SetB(0.0)
+	}
 	text.Draw(
 		image,
 		numberSymbol,
@@ -131,9 +139,17 @@ func MakeCard(
 	// Draw the suit in the center of the card
 	suitSymbol := SuitSymbols[suit]
 	suitOps := &text.DrawOptions{}
-	suitOps.ColorScale.SetR(0.0)
-	suitOps.ColorScale.SetG(0.0)
-	suitOps.ColorScale.SetB(0.0)
+	if suit == Heart || suit == Diamond {
+		// Red suits
+		suitOps.ColorScale.SetR(1.0)
+		suitOps.ColorScale.SetG(0.0)
+		suitOps.ColorScale.SetB(0.0)
+	} else {
+		// Black suits
+		suitOps.ColorScale.SetR(0.0)
+		suitOps.ColorScale.SetG(0.0)
+		suitOps.ColorScale.SetB(0.0)
+	}
 	suitOps.GeoM.Translate(
 		float64(DEFAULT_CARD_WIDTH)/2-suitTextface.Size/4,
 		float64(DEFAULT_CARD_HEIGHT)/2-suitTextface.Size/2,
