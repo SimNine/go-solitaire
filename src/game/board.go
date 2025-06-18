@@ -75,9 +75,22 @@ func NewBoard() *Board {
 		BasePos:   POS_DRAW_PILE,
 	}
 
+	// Create empty suit piles
+	suitPiles := make(map[Suit]*CardStack)
+	for i, suit := range []Suit{Heart, Diamond, Club, Spade} {
+		suitPiles[suit] = &CardStack{
+			Cards:     []*Card{},
+			RenderAll: false, // Suit piles only show the top card
+			BasePos: POS_OVERTURNED_PILE.Translate(
+				(2+i)*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
+				0,
+			),
+		}
+	}
+
 	// Create the board with suit piles, working stacks, and empty draw and overturned piles
 	return &Board{
-		suitPiles:     make(map[Suit]*CardStack),
+		suitPiles:     suitPiles,
 		workingStacks: workingStacks,
 		drawPile:      drawPile,
 		overturnedPile: &CardStack{
@@ -114,4 +127,9 @@ func (b *Board) Draw(screen *ebiten.Image) {
 
 	// Draw the overturned pile
 	b.overturnedPile.Draw(screen)
+
+	// Draw the suit piles
+	for _, stack := range b.suitPiles {
+		stack.Draw(screen)
+	}
 }
