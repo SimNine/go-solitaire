@@ -2,7 +2,6 @@ package game
 
 import (
 	"image"
-	"image/color"
 	"log"
 	"math"
 	"os"
@@ -22,6 +21,7 @@ const DEFAULT_SUIT_SIZE = 60.0
 var numberTextface *text.GoTextFace = nil
 var suitTextface *text.GoTextFace = nil
 var cardbackImage *ebiten.Image = nil
+var cardBlankImage *ebiten.Image = nil
 
 func InitCards() {
 	// Load font file
@@ -59,13 +59,13 @@ func InitCards() {
 	defer reader.Close()
 
 	// Decode the image
-	image, _, err := image.Decode(reader)
+	cardBackImageDecoded, _, err := image.Decode(reader)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Convert the image to an ebiten.Image
-	cardbackImage = ebiten.NewImageFromImage(image)
+	cardbackImage = ebiten.NewImageFromImage(cardBackImageDecoded)
 
 	// Scale the card back image to fit the default card dimensions
 	ops := &ebiten.DrawImageOptions{}
@@ -81,6 +81,32 @@ func InitCards() {
 
 	// Set the cardbackImage to the scaled image
 	cardbackImage = cardbackImageCanvas
+
+	// Load the blank card image
+	reader, err = os.Open("assets/card_blank.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer reader.Close()
+
+	// Decode the image
+	cardBlankImageDecoded, _, err := image.Decode(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Convert the image to an ebiten.Image
+	cardBlankImage = ebiten.NewImageFromImage(cardBlankImageDecoded)
+
+	// Scale the blank card image to fit the default card dimensions
+	cardBlankImageCanvas := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+	cardBlankImageCanvas.DrawImage(
+		cardBlankImage,
+		ops,
+	)
+
+	// Set the cardBlankImage to the scaled image
+	cardBlankImage = cardBlankImageCanvas
 }
 
 type Card struct {
@@ -96,13 +122,7 @@ func MakeCard(
 	number Number,
 	suit Suit,
 ) *Card {
-	image := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
-	image.Fill(color.RGBA{
-		R: 255,
-		G: 255,
-		B: 255,
-		A: 255,
-	})
+	image := ebiten.NewImageFromImage(cardBlankImage)
 
 	// Draw the number on the card in each corner
 	numberSymbol := NumberSymbols[number]
