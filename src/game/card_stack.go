@@ -25,6 +25,13 @@ type CardStack struct {
 	BasePos   util.Pos
 }
 
+func (c *CardStack) GetTopCard() *Card {
+	if len(c.Cards) == 0 {
+		return nil
+	}
+	return c.Cards[len(c.Cards)-1]
+}
+
 func (c *CardStack) Draw(screen *ebiten.Image) {
 	// Draw a placeholder for the base of the stack
 	op := &ebiten.DrawImageOptions{}
