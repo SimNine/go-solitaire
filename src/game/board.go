@@ -2,6 +2,7 @@ package game
 
 import (
 	"image/color"
+	"log"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -106,6 +107,12 @@ type Board struct {
 	workingStacks  [7]*CardStack
 	drawPile       *CardStack
 	overturnedPile *CardStack
+
+	heldCard         *Card
+	heldCardResetPos util.Pos
+	heldCardOffset   util.Pos
+
+	cursorPos util.Pos
 }
 
 func (b *Board) Draw(screen *ebiten.Image) {
@@ -132,4 +139,70 @@ func (b *Board) Draw(screen *ebiten.Image) {
 	for _, stack := range b.suitPiles {
 		stack.Draw(screen)
 	}
+}
+
+func (b *Board) SetCusrorPos(pos util.Pos) {
+	b.cursorPos = pos
+
+	if b.heldCard != nil {
+		b.heldCard.pos = b.cursorPos.TranslatePos(b.heldCardOffset)
+	}
+}
+
+func (b *Board) GrabCard() {
+	for _, stack := range b.workingStacks {
+		if len(stack.Cards) == 0 {
+			continue // Skip empty stacks
+		}
+		testCard := stack.Cards[len(stack.Cards)-1]
+		if testCard.Contains(b.cursorPos) {
+			log.Println("Card grabbed from working stack:", testCard)
+			b.heldCard = testCard
+			b.heldCardResetPos = b.heldCard.pos
+			b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
+			return
+		}
+	}
+
+	for _, stack := range b.suitPiles {
+		if len(stack.Cards) == 0 {
+			continue // Skip empty suit piles
+		}
+		testCard := stack.Cards[len(stack.Cards)-1]
+		if testCard.Contains(b.cursorPos) {
+			log.Println("Card grabbed from suit pile:", testCard)
+			b.heldCard = testCard
+			b.heldCardResetPos = b.heldCard.pos
+			b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
+			return
+		}
+	}
+
+	if len(b.drawPile.Cards) > 0 {
+		lastCard := b.drawPile.Cards[len(b.drawPile.Cards)-1]
+		if lastCard.Contains(b.cursorPos) {
+			log.Println("Card grabbed from draw pile:", lastCard)
+			b.heldCard = lastCard
+			b.heldCardResetPos = b.heldCard.pos
+			b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
+			return
+		}
+	}
+
+	if len(b.overturnedPile.Cards) > 0 {
+		lastCard := b.overturnedPile.Cards[len(b.overturnedPile.Cards)-1]
+		if lastCard.Contains(b.cursorPos) {
+			log.Println("Card grabbed from overturned pile:", lastCard)
+			b.heldCard = lastCard
+			b.heldCardResetPos = b.heldCard.pos
+			b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
+			return
+		}
+	}
+
+	log.Println("No card grabbed, cursor not over a working stack or no cards available.")
+}
+
+func (b *Board) ReleaseCard() {
+	b.heldCard = nil
 }

@@ -6,6 +6,13 @@ type Pos struct {
 	Y int
 }
 
+func MakePosFromTuple(x, y int) Pos {
+	return Pos{
+		X: x,
+		Y: y,
+	}
+}
+
 func (p Pos) ToTuple() (int, int) {
 	return p.X, p.Y
 }
@@ -23,4 +30,15 @@ func (p Pos) Translate(dx, dy int) Pos {
 
 func (p Pos) TranslatePos(offset Pos) Pos {
 	return p.Translate(offset.X, offset.Y)
+}
+
+func (p Pos) Sub(other Pos) Pos {
+	return Pos{
+		X: p.X - other.X,
+		Y: p.Y - other.Y,
+	}
+}
+
+func (p Pos) Eq(other Pos) bool {
+	return p.X == other.X && p.Y == other.Y
 }

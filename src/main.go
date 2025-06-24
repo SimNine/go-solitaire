@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"urffer.xyz/go-solitaire/src/game"
 	"urffer.xyz/go-solitaire/src/util"
 )
@@ -22,6 +23,13 @@ func (g *Game) Init() {
 }
 
 func (g *Game) Update() error {
+	pos := util.MakePosFromTuple(ebiten.CursorPosition())
+	g.board.SetCusrorPos(pos)
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		g.board.GrabCard()
+	} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		g.board.ReleaseCard()
+	}
 	return nil
 }
 
