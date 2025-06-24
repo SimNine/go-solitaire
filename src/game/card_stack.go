@@ -26,6 +26,11 @@ type CardStack struct {
 }
 
 func (c *CardStack) Draw(screen *ebiten.Image) {
+	// Draw a placeholder for the base of the stack
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(c.BasePos.ToFloatTuple())
+	screen.DrawImage(placeholderImage, op)
+
 	if c.RenderAll {
 		for _, card := range c.Cards {
 			card.Draw(screen)
@@ -35,11 +40,6 @@ func (c *CardStack) Draw(screen *ebiten.Image) {
 			// Draw only the top card of the stack
 			topCard := c.Cards[len(c.Cards)-1]
 			topCard.Draw(screen)
-		} else {
-			// Draw a placeholder if the stack is empty
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(c.BasePos.ToFloatTuple())
-			screen.DrawImage(placeholderImage, op)
 		}
 	}
 }
