@@ -37,3 +37,10 @@ var NumberSymbols = map[Number]string{
 }
 
 var NumberImages = map[Number]*ebiten.Image{}
+
+func (n Number) IsOneLessThan(other Number) bool {
+	return n == other-1
+}
+func (n Number) IsOneMoreThan(other Number) bool {
+	return n == other+1
+}

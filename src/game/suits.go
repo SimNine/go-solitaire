@@ -19,3 +19,14 @@ var SuitSymbols = map[Suit]string{
 }
 
 var SuitImages = map[Suit]*ebiten.Image{}
+
+func (s Suit) IsOppositeColor(other Suit) bool {
+	switch s {
+	case Spade, Club:
+		return other == Heart || other == Diamond
+	case Heart, Diamond:
+		return other == Spade || other == Club
+	default:
+		return false
+	}
+}

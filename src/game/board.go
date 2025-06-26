@@ -178,7 +178,7 @@ func (b *Board) MouseDown() {
 		}
 	}
 
-	if b.drawPile.GetTopCard().Contains(b.cursorPos) {
+	if topCard := b.drawPile.GetTopCard(); topCard != nil && topCard.Contains(b.cursorPos) {
 		log.Println("Card grabbed from draw pile")
 		if newStack := b.drawPile.SplitDeckAtPos(b.cursorPos); newStack != nil {
 			b.heldCardStack = newStack
@@ -188,6 +188,11 @@ func (b *Board) MouseDown() {
 			return
 		}
 	}
+	// } else if topCard == nil {
+	// 	if replenishStack := b.overturnedPile.splitDeckAtIndex(0); replenishStack != nil {
+
+	// 	}
+	// }
 
 	log.Println("No card grabbed, cursor not over a working stack or no cards available.")
 }
@@ -198,41 +203,96 @@ func (b *Board) MouseUp() {
 		return
 	}
 
-	foundStack := false
-
+	// Check if the held stack can be placed onto a working stack
 	for _, stack := range b.workingStacks {
 		topCard := stack.GetTopCard()
 
-		// Hack - create a fake card to do collision detection for empty stacks
-		if topCard == nil {
-			topCard = &Card{pos: stack.BasePos}
-		}
+		log.Println("Checking if held stack can be placed onto working stack:", stack)
 
-		// See if the stack contains the cursor position. If so, append stacks
-		if topCard.Contains(b.cursorPos) {
-			log.Println("Card dropped onto working stack:", stack)
-			stack.AppendStack(b.heldCardStack)
-			foundStack = true
+		// If the stack is empty, only a stack with a king as bottom card can be placed on it
+		if topCard == nil {
+			if b.heldCardStack.Cards[0].Number == King {
+				// See if the stack contains the cursor position. If so, append stacks
+				if (&Card{pos: stack.BasePos}).Contains(b.cursorPos) {
+					log.Println("Card dropped onto working stack:", stack)
+					stack.AppendStack(b.heldCardStack)
+					if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
+						newTopCard.IsShown = true
+					}
+					b.heldCardStack = nil
+					b.heldCardResetStack = nil
+					return
+				}
+			}
+		} else {
+			if topCard.Suit.IsOppositeColor(b.heldCardStack.Cards[0].Suit) &&
+				b.heldCardStack.Cards[0].Number.IsOneLessThan(topCard.Number) {
+				if topCard.Contains(b.cursorPos) {
+					log.Println("Card dropped onto working stack:", stack)
+					stack.AppendStack(b.heldCardStack)
+					if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
+						newTopCard.IsShown = true
+					}
+					b.heldCardStack = nil
+					b.heldCardResetStack = nil
+					return
+				}
+			}
 		}
 	}
 
-	for _, stack := range b.suitPiles {
+	// Check if the held stack can be placed onto a suit pile
+	for suit, stack := range b.suitPiles {
 		topCard := stack.GetTopCard()
-		if topCard == nil {
-			topCard = &Card{pos: stack.BasePos}
+
+		// If the held stack has more than one card, it cannot be placed onto a suit pile
+		if len(b.heldCardStack.Cards) > 1 {
+			log.Println("Held stack has more than one card, cannot be placed onto suit pile:", suit)
+			continue
 		}
-		if topCard.Contains(b.cursorPos) {
-			log.Println("Card dropped onto suit pile:", stack)
-			stack.AppendStack(b.heldCardStack)
-			foundStack = true
+
+		log.Println("Checking if held stack can be placed onto suit pile:", suit)
+
+		// If the stack is empty, only an ace can be placed on it
+		if topCard == nil {
+			if b.heldCardStack.Cards[0].Number == Ace {
+				if (&Card{pos: stack.BasePos}).Contains(b.cursorPos) {
+					log.Println("Card dropped onto suit pile:", stack)
+					stack.AppendStack(b.heldCardStack)
+					b.heldCardStack = nil
+					b.heldCardResetStack = nil
+					return
+				}
+			}
+		} else {
+			if b.heldCardStack.Cards[0].Suit == suit &&
+				b.heldCardStack.Cards[0].Number.IsOneMoreThan(topCard.Number) {
+				if topCard.Contains(b.cursorPos) {
+					log.Println("Card dropped onto suit pile:", stack)
+					stack.AppendStack(b.heldCardStack)
+					b.heldCardStack = nil
+					b.heldCardResetStack = nil
+					return
+				}
+			}
 		}
 	}
+
+	// for _, stack := range b.suitPiles {
+	// 	topCard := stack.GetTopCard()
+	// 	if topCard == nil {
+	// 		topCard = &Card{pos: stack.BasePos}
+	// 	}
+	// 	if topCard.Contains(b.cursorPos) {
+	// 		log.Println("Card dropped onto suit pile:", stack)
+	// 		stack.AppendStack(b.heldCardStack)
+	// 		foundStack = true
+	// 	}
+	// }
 
 	// No stack was dropped onto, so reset the held stack
-	if !foundStack {
-		log.Println("No stack found to drop the held card onto, resetting held card stack.")
-		b.heldCardResetStack.AppendStack(b.heldCardStack)
-	}
+	log.Println("No stack found to drop the held card onto, resetting held card stack.")
+	b.heldCardResetStack.AppendStack(b.heldCardStack)
 
 	// Remove held card stack state
 	b.heldCardStack = nil
