@@ -86,10 +86,6 @@ func InitCardsAssets() {
 		if err != nil {
 			log.Fatalf("Failed to load suit image for %s: %v", suit, err)
 		}
-		image = util.ScaleEbitenImage(
-			image,
-			util.Dims{X: image.Bounds().Dx() / 3, Y: image.Bounds().Dy() / 3},
-		)
 		SuitImages[suit] = image
 	}
 
@@ -114,12 +110,22 @@ func InitCardsAssets() {
 		NumberImages[number] = image
 	}
 
-	// // Generate remaining number images
-	// for number := range []Number{
-	// 	Six, Seven, Eight, Nine, Ten, Jack, Queen, King,
-	// } {
-
-	// }
+	// Generate remaining number images
+	for _, number := range []Number{
+		Six, Seven, Eight, Nine, Ten, Jack, Queen, King,
+	} {
+		numberSymbol := NumberSymbols[number]
+		numberOps := &text.DrawOptions{}
+		numberOps.GeoM.Scale(4.0, 4.0)
+		newImage := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
+		text.Draw(
+			newImage,
+			numberSymbol,
+			numberTextface,
+			numberOps,
+		)
+		NumberImages[number] = newImage
+	}
 }
 
 type Card struct {
@@ -137,65 +143,58 @@ func MakeCard(
 ) *Card {
 	image := ebiten.NewImageFromImage(cardBlankImage)
 
-	// Draw the number on the card in each corner
-	numberSymbol := NumberSymbols[number]
-	textOps := &text.DrawOptions{}
-	if suit == Heart || suit == Diamond {
-		// Red suits
-		textOps.ColorScale.SetR(1.0)
-		textOps.ColorScale.SetG(0.0)
-		textOps.ColorScale.SetB(0.0)
-	} else {
-		// Black suits
-		textOps.ColorScale.SetR(0.0)
-		textOps.ColorScale.SetG(0.0)
-		textOps.ColorScale.SetB(0.0)
-	}
-	text.Draw(
-		image,
-		numberSymbol,
-		numberTextface,
-		textOps,
-	)
-	textOps.GeoM.Rotate(math.Pi)
-	textOps.GeoM.Translate(
-		float64(DEFAULT_CARD_WIDTH),
-		float64(DEFAULT_CARD_HEIGHT),
-	)
-	text.Draw(
-		image,
-		numberSymbol,
-		numberTextface,
-		textOps,
-	)
-
 	// Draw the suit in the center of the card
 	suitImage := SuitImages[suit]
-	// suitOps := &text.DrawOptions{}
-	// if suit == Heart || suit == Diamond {
-	// 	// Red suits
-	// 	suitOps.ColorScale.SetR(1.0)
-	// 	suitOps.ColorScale.SetG(0.0)
-	// 	suitOps.ColorScale.SetB(0.0)
-	// } else {
-	// 	// Black suits
-	// 	suitOps.ColorScale.SetR(0.0)
-	// 	suitOps.ColorScale.SetG(0.0)
-	// 	suitOps.ColorScale.SetB(0.0)
-	// }
 	suitOps := &ebiten.DrawImageOptions{}
+	if suit == Heart || suit == Diamond {
+		// Red suits
+		suitOps.ColorScale.SetR(1.0)
+		suitOps.ColorScale.SetG(0.0)
+		suitOps.ColorScale.SetB(0.0)
+	} else {
+		// Black suits
+		suitOps.ColorScale.SetR(0.0)
+		suitOps.ColorScale.SetG(0.0)
+		suitOps.ColorScale.SetB(0.0)
+	}
+	suitImage = util.ScaleEbitenImage(
+		suitImage,
+		util.Dims{X: suitImage.Bounds().Dx() / 4, Y: suitImage.Bounds().Dy() / 4},
+	)
 	suitOps.GeoM.Translate(
 		float64(DEFAULT_CARD_WIDTH)/2.0-float64(suitImage.Bounds().Dx())/2.0,
 		float64(DEFAULT_CARD_HEIGHT)/2.0-float64(suitTextface.Size)/2.0,
 	)
 	image.DrawImage(suitImage, suitOps)
-	// suitImage.DrawImage(image, suitOps)
-	// text.Draw(
-	// 	image,
-	// 	suitSymbol,
-	// 	suitTextface,
-	// 	suitOps,
-	// )
+
+	// Draw the number on the card in each corner
+	if numberImage := NumberImages[number]; numberImage != nil {
+		numberOps := &ebiten.DrawImageOptions{}
+		if suit == Heart || suit == Diamond {
+			// Red suits
+			numberOps.ColorScale.SetR(1.0)
+			numberOps.ColorScale.SetG(0.0)
+			numberOps.ColorScale.SetB(0.0)
+		} else {
+			// Black suits
+			numberOps.ColorScale.SetR(0.0)
+			numberOps.ColorScale.SetG(0.0)
+			numberOps.ColorScale.SetB(0.0)
+		}
+		numberImage = util.ScaleEbitenImage(
+			numberImage,
+			util.Dims{X: numberImage.Bounds().Dx() / 4, Y: numberImage.Bounds().Dy() / 4},
+		)
+		image.DrawImage(numberImage, numberOps)
+		numberOps.GeoM.Rotate(math.Pi)
+		numberOps.GeoM.Translate(
+			float64(DEFAULT_CARD_WIDTH),
+			float64(DEFAULT_CARD_HEIGHT),
+		)
+		image.DrawImage(numberImage, numberOps)
+	} else {
+		log.Fatalf("No image found for number %s", number)
+	}
 
 	// Return the card with the complete image
 	return &Card{
