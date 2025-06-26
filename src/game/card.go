@@ -1,7 +1,6 @@
 package game
 
 import (
-	"image"
 	"log"
 	"math"
 	"os"
@@ -20,7 +19,7 @@ const DEFAULT_SUIT_SIZE = 60.0
 
 var numberTextface *text.GoTextFace = nil
 var suitTextface *text.GoTextFace = nil
-var cardbackImage *ebiten.Image = nil
+var cardBackImage *ebiten.Image = nil
 var cardBlankImage *ebiten.Image = nil
 
 func InitCards() {
@@ -52,61 +51,28 @@ func InitCards() {
 	}
 
 	// Load the card back image
-	reader, err = os.Open("assets/card_back.png")
+	cardBackImage, err = util.LoadEbitenImageFromFile("assets/card_back.png")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer reader.Close()
-
-	// Decode the image
-	cardBackImageDecoded, _, err := image.Decode(reader)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Convert the image to an ebiten.Image
-	cardbackImage = ebiten.NewImageFromImage(cardBackImageDecoded)
 
 	// Scale the card back image to fit the default card dimensions
-	ops := &ebiten.DrawImageOptions{}
-	bounds := cardbackImage.Bounds().Size()
-	xRatio := float64(bounds.X) / float64(DEFAULT_CARD_WIDTH)
-	yRatio := float64(bounds.Y) / float64(DEFAULT_CARD_HEIGHT)
-	ops.GeoM.Scale(1/xRatio, 1/yRatio)
-	cardbackImageCanvas := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
-	cardbackImageCanvas.DrawImage(
-		cardbackImage,
-		ops,
+	cardBackImage = util.ScaleEbitenImage(
+		cardBackImage,
+		util.Dims{X: DEFAULT_CARD_WIDTH, Y: DEFAULT_CARD_HEIGHT},
 	)
-
-	// Set the cardbackImage to the scaled image
-	cardbackImage = cardbackImageCanvas
 
 	// Load the blank card image
-	reader, err = os.Open("assets/card_blank.png")
+	cardBlankImage, err = util.LoadEbitenImageFromFile("assets/card_blank.png")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer reader.Close()
-
-	// Decode the image
-	cardBlankImageDecoded, _, err := image.Decode(reader)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Convert the image to an ebiten.Image
-	cardBlankImage = ebiten.NewImageFromImage(cardBlankImageDecoded)
 
 	// Scale the blank card image to fit the default card dimensions
-	cardBlankImageCanvas := ebiten.NewImage(DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT)
-	cardBlankImageCanvas.DrawImage(
+	cardBlankImage = util.ScaleEbitenImage(
 		cardBlankImage,
-		ops,
+		util.Dims{X: DEFAULT_CARD_WIDTH, Y: DEFAULT_CARD_HEIGHT},
 	)
-
-	// Set the cardBlankImage to the scaled image
-	cardBlankImage = cardBlankImageCanvas
 }
 
 type Card struct {
@@ -197,7 +163,7 @@ func (c *Card) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(float64(c.pos.X), float64(c.pos.Y))
 	if !c.IsShown {
 		// If the card is not shown, draw the card back
-		screen.DrawImage(cardbackImage, op)
+		screen.DrawImage(cardBackImage, op)
 	} else {
 		screen.DrawImage(c.image, op)
 	}
