@@ -56,9 +56,9 @@ func (c *CardStack) Draw(screen *ebiten.Image) {
 func (c *CardStack) TranslateTo(pos util.Pos) {
 	// Translate the base position of the stack to a new position
 	c.BasePos = pos
-	for i, card := range c.Cards {
-		card.pos = pos.TranslatePos(util.Pos{X: 0, Y: i * DEFAULT_CARD_INTERPILE_SPACING})
-	}
+
+	// Fix the positions of all cards in the stack
+	c.repositionCards()
 }
 
 func (c *CardStack) AppendStack(other *CardStack) {
@@ -66,11 +66,22 @@ func (c *CardStack) AppendStack(other *CardStack) {
 		return // Nothing to append
 	}
 
-	// Update the base position of the appended cards, thereby updating each card's position
-	other.TranslateTo(c.BasePos.Translate(0, len(c.Cards)*DEFAULT_CARD_INTERPILE_SPACING))
-
 	// Append the cards from the other stack to this stack
 	c.Cards = append(c.Cards, other.Cards...)
+
+	// Fix the positions of all cards in the stack
+	c.repositionCards()
+}
+
+func (c *CardStack) repositionCards() {
+	// Reposition all cards in the stack based on the base position
+	for i, card := range c.Cards {
+		if c.IsSpread {
+			card.pos = c.BasePos.Translate(0, i*DEFAULT_CARD_INTERPILE_SPACING)
+		} else {
+			card.pos = c.BasePos
+		}
+	}
 }
 
 func (c *CardStack) splitDeckAtIndex(index int) *CardStack {
