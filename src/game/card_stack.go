@@ -20,9 +20,9 @@ func InitCardStackBkg() {
 }
 
 type CardStack struct {
-	Cards     []*Card
-	RenderAll bool
-	BasePos   util.Pos
+	Cards    []*Card
+	BasePos  util.Pos
+	IsSpread bool
 }
 
 func (c *CardStack) GetTopCard() *Card {
@@ -33,7 +33,7 @@ func (c *CardStack) GetTopCard() *Card {
 }
 
 func (c *CardStack) Draw(screen *ebiten.Image) {
-	if c.RenderAll {
+	if c.IsSpread {
 		for _, card := range c.Cards {
 			card.Draw(screen)
 		}
@@ -79,9 +79,9 @@ func (c *CardStack) splitDeckAtIndex(index int) *CardStack {
 	}
 	// Create a new stack with the cards from this index to the end
 	newStack := &CardStack{
-		Cards:     c.Cards[index:],
-		RenderAll: c.RenderAll,
-		BasePos:   c.BasePos.Translate(0, index*DEFAULT_CARD_INTERPILE_SPACING),
+		Cards:    c.Cards[index:],
+		IsSpread: c.IsSpread,
+		BasePos:  c.BasePos.Translate(0, index*DEFAULT_CARD_INTERPILE_SPACING),
 	}
 	// Update this stack to only contain the cards before this index
 	c.Cards = c.Cards[:index]

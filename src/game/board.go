@@ -55,8 +55,8 @@ func NewBoard() *Board {
 			*currStack = append(*currStack, card)
 		}
 		workingStacks[i] = &CardStack{
-			Cards:     *currStack,
-			RenderAll: true,
+			Cards:    *currStack,
+			IsSpread: true,
 			BasePos: POS_DRAW_PILE.Translate(
 				i*(DEFAULT_CARD_SPACING+DEFAULT_CARD_WIDTH),
 				DEFAULT_CARD_HEIGHT+DEFAULT_CARD_SPACING,
@@ -71,17 +71,17 @@ func NewBoard() *Board {
 		card.IsShown = false
 	}
 	drawPile := &CardStack{
-		Cards:     drawPileCards,
-		RenderAll: false,
-		BasePos:   POS_DRAW_PILE,
+		Cards:    drawPileCards,
+		IsSpread: false,
+		BasePos:  POS_DRAW_PILE,
 	}
 
 	// Create empty suit piles
 	suitPiles := make(map[Suit]*CardStack)
 	for i, suit := range []Suit{Heart, Diamond, Club, Spade} {
 		suitPiles[suit] = &CardStack{
-			Cards:     []*Card{},
-			RenderAll: false, // Suit piles only show the top card
+			Cards:    []*Card{},
+			IsSpread: false, // Suit piles only show the top card
 			BasePos: POS_OVERTURNED_PILE.Translate(
 				(2+i)*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
 				0,
@@ -95,9 +95,9 @@ func NewBoard() *Board {
 		workingStacks: workingStacks,
 		drawPile:      drawPile,
 		overturnedPile: &CardStack{
-			Cards:     []*Card{},
-			RenderAll: false,
-			BasePos:   POS_OVERTURNED_PILE,
+			Cards:    []*Card{},
+			IsSpread: false,
+			BasePos:  POS_OVERTURNED_PILE,
 		},
 	}
 }
@@ -179,8 +179,43 @@ func (b *Board) GrabCard() {
 }
 
 func (b *Board) ReleaseCard() {
-	b.heldCardResetStack.AppendStack(b.heldCardStack)
+	foundStack := false
 
+	for _, stack := range b.workingStacks {
+		topCard := stack.GetTopCard()
+
+		// Hack - create a fake card to do collision detection for empty stacks
+		if topCard == nil {
+			topCard = &Card{pos: stack.BasePos}
+		}
+
+		// See if the stack contains the cursor position. If so, append stacks
+		if topCard.Contains(b.cursorPos) {
+			log.Println("Card dropped onto working stack:", stack)
+			stack.AppendStack(b.heldCardStack)
+			foundStack = true
+		}
+	}
+
+	for _, stack := range b.suitPiles {
+		topCard := stack.GetTopCard()
+		if topCard == nil {
+			topCard = &Card{pos: stack.BasePos}
+		}
+		if topCard.Contains(b.cursorPos) {
+			log.Println("Card dropped onto suit pile:", stack)
+			stack.AppendStack(b.heldCardStack)
+			foundStack = true
+		}
+	}
+
+	// No stack was dropped onto, so reset the held stack
+	if !foundStack {
+		log.Println("No stack found to drop the held card onto, resetting held card stack.")
+		b.heldCardResetStack.AppendStack(b.heldCardStack)
+	}
+
+	// Remove held card stack state
 	b.heldCardStack = nil
 	b.heldCardResetStack = nil
 }
