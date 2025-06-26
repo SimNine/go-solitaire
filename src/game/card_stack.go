@@ -92,7 +92,7 @@ func (c *CardStack) splitDeckAtIndex(index int) *CardStack {
 	newStack := &CardStack{
 		Cards:    c.Cards[index:],
 		IsSpread: c.IsSpread,
-		BasePos:  c.BasePos.Translate(0, index*DEFAULT_CARD_INTERPILE_SPACING),
+		BasePos:  c.Cards[index].pos,
 	}
 	// Update this stack to only contain the cards before this index
 	c.Cards = c.Cards[:index]

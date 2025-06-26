@@ -26,9 +26,9 @@ func (g *Game) Update() error {
 	pos := util.MakePosFromTuple(ebiten.CursorPosition())
 	g.board.SetCusrorPos(pos)
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		g.board.GrabCard()
+		g.board.MouseDown()
 	} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		g.board.ReleaseCard()
+		g.board.MouseUp()
 	}
 	return nil
 }

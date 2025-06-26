@@ -43,15 +43,7 @@ func NewBoard() *Board {
 		for j := 0; j <= i; j++ {
 			var card *Card
 			card, deck = deck[0], deck[1:]
-			card.pos = util.Pos{
-				X: DEFAULT_CARD_SPACING + i*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
-				Y: DEFAULT_CARD_SPACING + DEFAULT_CARD_HEIGHT + DEFAULT_CARD_SPACING + j*DEFAULT_CARD_INTERPILE_SPACING,
-			}
-			if j == i {
-				card.IsShown = true // Only the last card in each stack is shown
-			} else {
-				card.IsShown = false // The rest are face down
-			}
+			card.IsShown = false
 			*currStack = append(*currStack, card)
 		}
 		workingStacks[i] = &CardStack{
@@ -62,6 +54,12 @@ func NewBoard() *Board {
 				DEFAULT_CARD_HEIGHT+DEFAULT_CARD_SPACING,
 			),
 		}
+		workingStacks[i].GetTopCard().IsShown = true
+		workingStacks[i].BasePos = util.Pos{
+			X: DEFAULT_CARD_SPACING + i*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
+			Y: DEFAULT_CARD_SPACING + DEFAULT_CARD_HEIGHT + DEFAULT_CARD_SPACING,
+		}
+		workingStacks[i].repositionCards()
 	}
 
 	// Put the rest of the deck into the draw pile
@@ -154,13 +152,18 @@ func (b *Board) SetCusrorPos(pos util.Pos) {
 	}
 }
 
-func (b *Board) GrabCard() {
+func (b *Board) MouseDown() {
 	for _, stack := range b.workingStacks {
 		if newStack := stack.SplitDeckAtPos(b.cursorPos); newStack != nil {
-			log.Println("Sub-stack picked up")
-			b.heldCardStack = newStack
-			b.heldCardResetStack = stack
-			b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
+			if !newStack.Cards[0].IsShown {
+				log.Println("Cannot pick up a stack of cards where the bottom card is not shown.")
+				stack.AppendStack(newStack)
+			} else {
+				log.Println("Sub-stack picked up")
+				b.heldCardStack = newStack
+				b.heldCardResetStack = stack
+				b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
+			}
 			return
 		}
 	}
@@ -175,10 +178,26 @@ func (b *Board) GrabCard() {
 		}
 	}
 
+	if b.drawPile.GetTopCard().Contains(b.cursorPos) {
+		log.Println("Card grabbed from draw pile")
+		if newStack := b.drawPile.SplitDeckAtPos(b.cursorPos); newStack != nil {
+			b.heldCardStack = newStack
+			b.heldCardStack.Cards[0].IsShown = true
+			b.heldCardResetStack = b.overturnedPile
+			b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
+			return
+		}
+	}
+
 	log.Println("No card grabbed, cursor not over a working stack or no cards available.")
 }
 
-func (b *Board) ReleaseCard() {
+func (b *Board) MouseUp() {
+	if b.heldCardStack == nil {
+		log.Println("No card held, ignoring mouse up event.")
+		return
+	}
+
 	foundStack := false
 
 	for _, stack := range b.workingStacks {
