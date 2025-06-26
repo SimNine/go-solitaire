@@ -61,6 +61,18 @@ func (c *CardStack) TranslateTo(pos util.Pos) {
 	}
 }
 
+func (c *CardStack) AppendStack(other *CardStack) {
+	if other == nil || len(other.Cards) == 0 {
+		return // Nothing to append
+	}
+
+	// Update the base position of the appended cards, thereby updating each card's position
+	other.TranslateTo(c.BasePos.Translate(0, len(c.Cards)*DEFAULT_CARD_INTERPILE_SPACING))
+
+	// Append the cards from the other stack to this stack
+	c.Cards = append(c.Cards, other.Cards...)
+}
+
 func (c *CardStack) splitDeckAtIndex(index int) *CardStack {
 	if index < 0 || index >= len(c.Cards) {
 		return nil // Invalid index

@@ -179,5 +179,8 @@ func (b *Board) GrabCard() {
 }
 
 func (b *Board) ReleaseCard() {
+	b.heldCardResetStack.AppendStack(b.heldCardStack)
+
 	b.heldCardStack = nil
+	b.heldCardResetStack = nil
 }
