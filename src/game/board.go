@@ -108,9 +108,9 @@ type Board struct {
 	drawPile       *CardStack
 	overturnedPile *CardStack
 
-	heldCard         *Card
-	heldCardResetPos util.Pos
-	heldCardOffset   util.Pos
+	heldCardStack      *CardStack
+	heldCardResetStack *CardStack
+	heldCardOffset     util.Pos
 
 	cursorPos util.Pos
 }
@@ -139,64 +139,45 @@ func (b *Board) Draw(screen *ebiten.Image) {
 	for _, stack := range b.suitPiles {
 		stack.Draw(screen)
 	}
+
+	// Draw the held card stack if it exists
+	if b.heldCardStack != nil {
+		b.heldCardStack.Draw(screen)
+	}
 }
 
 func (b *Board) SetCusrorPos(pos util.Pos) {
 	b.cursorPos = pos
 
-	if b.heldCard != nil {
-		b.heldCard.pos = b.cursorPos.TranslatePos(b.heldCardOffset)
+	if b.heldCardStack != nil {
+		b.heldCardStack.TranslateTo(b.cursorPos.TranslatePos(b.heldCardOffset))
 	}
 }
 
 func (b *Board) GrabCard() {
 	for _, stack := range b.workingStacks {
-		topCard := stack.GetTopCard()
-		if topCard == nil {
-			continue // Skip empty stacks
-		} else if topCard.Contains(b.cursorPos) {
-			log.Println("Card grabbed from working stack:", topCard)
-			b.heldCard = topCard
-			b.heldCardResetPos = b.heldCard.pos
-			b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
+		if newStack := stack.SplitDeckAtPos(b.cursorPos); newStack != nil {
+			log.Println("Sub-stack picked up")
+			b.heldCardStack = newStack
+			b.heldCardResetStack = stack
+			b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
 			return
 		}
 	}
 
 	for _, stack := range b.suitPiles {
-		topCard := stack.GetTopCard()
-		if topCard == nil {
-			continue // Skip empty suit piles
-		} else if topCard.Contains(b.cursorPos) {
-			log.Println("Card grabbed from suit pile:", topCard)
-			b.heldCard = topCard
-			b.heldCardResetPos = b.heldCard.pos
-			b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
+		if newStack := stack.SplitDeckAtPos(b.cursorPos); newStack != nil {
+			log.Println("Card grabbed from suit pile:", newStack)
+			b.heldCardStack = newStack
+			b.heldCardResetStack = stack
+			b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
 			return
 		}
-	}
-
-	topCard := b.drawPile.GetTopCard()
-	if topCard != nil && topCard.Contains(b.cursorPos) {
-		log.Println("Card grabbed from draw pile:", topCard)
-		b.heldCard = topCard
-		b.heldCardResetPos = b.heldCard.pos
-		b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
-		return
-	}
-
-	topCard = b.overturnedPile.GetTopCard()
-	if topCard != nil && topCard.Contains(b.cursorPos) {
-		log.Println("Card grabbed from overturned pile:", topCard)
-		b.heldCard = topCard
-		b.heldCardResetPos = b.heldCard.pos
-		b.heldCardOffset = b.heldCard.pos.Sub(b.cursorPos)
-		return
 	}
 
 	log.Println("No card grabbed, cursor not over a working stack or no cards available.")
 }
 
 func (b *Board) ReleaseCard() {
-	b.heldCard = nil
+	b.heldCardStack = nil
 }

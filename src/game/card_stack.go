@@ -50,3 +50,44 @@ func (c *CardStack) Draw(screen *ebiten.Image) {
 		}
 	}
 }
+
+func (c *CardStack) TranslateTo(pos util.Pos) {
+	// Translate the base position of the stack to a new position
+	c.BasePos = pos
+	for i, card := range c.Cards {
+		card.pos = pos.TranslatePos(util.Pos{X: 0, Y: i * DEFAULT_CARD_INTERPILE_SPACING})
+	}
+}
+
+func (c *CardStack) splitDeckAtIndex(index int) *CardStack {
+	if index < 0 || index >= len(c.Cards) {
+		return nil // Invalid index
+	}
+	// Create a new stack with the cards from this index to the end
+	newStack := &CardStack{
+		Cards:     c.Cards[index:],
+		RenderAll: c.RenderAll,
+		BasePos:   c.BasePos.Translate(0, index*DEFAULT_CARD_INTERPILE_SPACING),
+	}
+	// Update this stack to only contain the cards before this index
+	c.Cards = c.Cards[:index]
+	return newStack
+}
+
+func (c *CardStack) SplitDeckAtPos(pos util.Pos) *CardStack {
+	// Find the index of the card that contains the given position
+	for i, card := range c.Cards {
+		if card.Contains(pos) {
+			if i < len(c.Cards)-1 {
+				// Split deck at the current card if it's not the last one
+				if !c.Cards[i+1].Contains(pos) {
+					return c.splitDeckAtIndex(i)
+				}
+			} else {
+				// Split deck on the last card
+				return c.splitDeckAtIndex(i)
+			}
+		}
+	}
+	return nil // No card found at the given position
+}
