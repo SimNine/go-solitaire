@@ -22,7 +22,7 @@ var suitTextface *text.GoTextFace = nil
 var cardBackImage *ebiten.Image = nil
 var cardBlankImage *ebiten.Image = nil
 
-func InitCards() {
+func InitCardsAssets() {
 	// Load font file
 	reader, err := os.Open("assets/unifont-16.0.04.otf")
 	if err != nil {
@@ -73,6 +73,53 @@ func InitCards() {
 		cardBlankImage,
 		util.Dims{X: DEFAULT_CARD_WIDTH, Y: DEFAULT_CARD_HEIGHT},
 	)
+
+	// Load suit images
+	suitImagePaths := map[Suit]string{
+		Heart:   "assets/suit_heart.png",
+		Diamond: "assets/suit_diamond.png",
+		Club:    "assets/suit_club.png",
+		Spade:   "assets/suit_spade.png",
+	}
+	for suit, imagePath := range suitImagePaths {
+		image, err := util.LoadEbitenImageFromFile(imagePath)
+		if err != nil {
+			log.Fatalf("Failed to load suit image for %s: %v", suit, err)
+		}
+		image = util.ScaleEbitenImage(
+			image,
+			util.Dims{X: image.Bounds().Dx() / 3, Y: image.Bounds().Dy() / 3},
+		)
+		SuitImages[suit] = image
+	}
+
+	// Load number images
+	numberImagePaths := map[Number]string{
+		Ace:   "assets/num_1-ace.png",
+		Two:   "assets/num_2.png",
+		Three: "assets/num_3.png",
+		Four:  "assets/num_4.png",
+		Five:  "assets/num_5.png",
+	}
+	for number, imagePath := range numberImagePaths {
+		image, err := util.LoadEbitenImageFromFile(imagePath)
+		if err != nil {
+			log.Fatalf("Failed to load number image for %s: %v", number, err)
+		}
+		// Scale the number image to fit the default card dimensions
+		image = util.ScaleEbitenImage(
+			image,
+			util.Dims{X: DEFAULT_CARD_WIDTH, Y: DEFAULT_CARD_HEIGHT},
+		)
+		NumberImages[number] = image
+	}
+
+	// // Generate remaining number images
+	// for number := range []Number{
+	// 	Six, Seven, Eight, Nine, Ten, Jack, Queen, King,
+	// } {
+
+	// }
 }
 
 type Card struct {
@@ -123,29 +170,32 @@ func MakeCard(
 	)
 
 	// Draw the suit in the center of the card
-	suitSymbol := SuitSymbols[suit]
-	suitOps := &text.DrawOptions{}
-	if suit == Heart || suit == Diamond {
-		// Red suits
-		suitOps.ColorScale.SetR(1.0)
-		suitOps.ColorScale.SetG(0.0)
-		suitOps.ColorScale.SetB(0.0)
-	} else {
-		// Black suits
-		suitOps.ColorScale.SetR(0.0)
-		suitOps.ColorScale.SetG(0.0)
-		suitOps.ColorScale.SetB(0.0)
-	}
+	suitImage := SuitImages[suit]
+	// suitOps := &text.DrawOptions{}
+	// if suit == Heart || suit == Diamond {
+	// 	// Red suits
+	// 	suitOps.ColorScale.SetR(1.0)
+	// 	suitOps.ColorScale.SetG(0.0)
+	// 	suitOps.ColorScale.SetB(0.0)
+	// } else {
+	// 	// Black suits
+	// 	suitOps.ColorScale.SetR(0.0)
+	// 	suitOps.ColorScale.SetG(0.0)
+	// 	suitOps.ColorScale.SetB(0.0)
+	// }
+	suitOps := &ebiten.DrawImageOptions{}
 	suitOps.GeoM.Translate(
-		float64(DEFAULT_CARD_WIDTH)/2-suitTextface.Size/4,
-		float64(DEFAULT_CARD_HEIGHT)/2-suitTextface.Size/2,
+		float64(DEFAULT_CARD_WIDTH)/2.0-float64(suitImage.Bounds().Dx())/2.0,
+		float64(DEFAULT_CARD_HEIGHT)/2.0-float64(suitTextface.Size)/2.0,
 	)
-	text.Draw(
-		image,
-		suitSymbol,
-		suitTextface,
-		suitOps,
-	)
+	image.DrawImage(suitImage, suitOps)
+	// suitImage.DrawImage(image, suitOps)
+	// text.Draw(
+	// 	image,
+	// 	suitSymbol,
+	// 	suitTextface,
+	// 	suitOps,
+	// )
 
 	// Return the card with the complete image
 	return &Card{

@@ -1,5 +1,7 @@
 package game
 
+import "github.com/hajimehoshi/ebiten/v2"
+
 type Suit string
 
 const (
@@ -15,3 +17,5 @@ var SuitSymbols = map[Suit]string{
 	Club:    "♣",
 	Heart:   "♥",
 }
+
+var SuitImages = map[Suit]*ebiten.Image{}

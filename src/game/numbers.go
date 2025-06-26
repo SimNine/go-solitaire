@@ -1,5 +1,7 @@
 package game
 
+import "github.com/hajimehoshi/ebiten/v2"
+
 type Number int
 
 const (
@@ -33,3 +35,5 @@ var NumberSymbols = map[Number]string{
 	Queen: "Q",
 	King:  "K",
 }
+
+var NumberImages = map[Number]*ebiten.Image{}
