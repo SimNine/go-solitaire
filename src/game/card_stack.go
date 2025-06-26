@@ -33,11 +33,6 @@ func (c *CardStack) GetTopCard() *Card {
 }
 
 func (c *CardStack) Draw(screen *ebiten.Image) {
-	// Draw a placeholder for the base of the stack
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(c.BasePos.ToFloatTuple())
-	screen.DrawImage(placeholderImage, op)
-
 	if c.RenderAll {
 		for _, card := range c.Cards {
 			card.Draw(screen)
@@ -48,6 +43,13 @@ func (c *CardStack) Draw(screen *ebiten.Image) {
 			topCard := c.Cards[len(c.Cards)-1]
 			topCard.Draw(screen)
 		}
+	}
+
+	if len(c.Cards) == 0 {
+		// Draw a placeholder for the base of the stack
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(c.BasePos.ToFloatTuple())
+		screen.DrawImage(placeholderImage, op)
 	}
 }
 
