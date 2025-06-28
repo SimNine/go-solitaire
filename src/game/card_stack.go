@@ -73,6 +73,16 @@ func (c *CardStack) AppendStack(other *CardStack) {
 	c.repositionCards()
 }
 
+func (c *CardStack) Reverse() {
+	// Reverse the order of cards in the stack
+	for i, j := 0, len(c.Cards)-1; i < j; i, j = i+1, j-1 {
+		c.Cards[i], c.Cards[j] = c.Cards[j], c.Cards[i]
+	}
+
+	// Reposition cards after reversing
+	c.repositionCards()
+}
+
 func (c *CardStack) repositionCards() {
 	// Reposition all cards in the stack based on the base position
 	for i, card := range c.Cards {
@@ -115,4 +125,10 @@ func (c *CardStack) SplitDeckAtPos(pos util.Pos) *CardStack {
 		}
 	}
 	return nil // No card found at the given position
+}
+
+func (c *CardStack) BaseCardContains(pos util.Pos) bool {
+	// Check if the base position of the stack contains the given position
+	return pos.X >= c.BasePos.X && pos.X <= c.BasePos.X+DEFAULT_CARD_WIDTH &&
+		pos.Y >= c.BasePos.Y && pos.Y <= c.BasePos.Y+DEFAULT_CARD_HEIGHT
 }
