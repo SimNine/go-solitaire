@@ -156,6 +156,7 @@ func (c *CardStack) CreateAnimationToPos(targetPos util.Pos[float64], onFinishAc
 		CurrPos: func() util.Pos[float64] {
 			return c.basePos
 		},
+		BaseVelocity: 0.3,
 	}
 	a.Update = func() {
 		delta := a.UnitDelta()
