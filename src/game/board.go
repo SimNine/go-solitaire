@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"urffer.xyz/go-solitaire/src/animation"
 	"urffer.xyz/go-solitaire/src/util"
 )
 
@@ -102,6 +103,8 @@ type Board struct {
 	heldCardOffset     util.Pos
 
 	cursorPos util.Pos
+
+	runningAnimation *animation.Animation
 }
 
 func (b *Board) Draw(screen *ebiten.Image) {
@@ -135,15 +138,30 @@ func (b *Board) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (b *Board) SetCusrorPos(pos util.Pos) {
-	b.cursorPos = pos
-
-	if b.heldCardStack != nil {
+func (b *Board) Update() {
+	if b.runningAnimation != nil {
+		b.runningAnimation.Update()
+		if b.runningAnimation.CurrPos().Eq(b.runningAnimation.TargetPos) {
+			// Animation finished, call the finish action
+			b.runningAnimation.OnFinishAction()
+			b.runningAnimation = nil // Clear the running animation
+		}
+	} else if b.heldCardStack != nil {
 		b.heldCardStack.TranslateTo(b.cursorPos.TranslatePos(b.heldCardOffset))
 	}
 }
 
+func (b *Board) SetCusrorPos(pos util.Pos) {
+	b.cursorPos = pos
+}
+
 func (b *Board) MouseDown() {
+	// If there is an ongoing animation, ignore the mouse down event
+	if b.runningAnimation != nil {
+		log.Println("Ignoring mouse down event, animation is running.")
+		return
+	}
+
 	// Try picking cards up from one of the working stacks
 	for _, stack := range b.workingStacks {
 		if newStack := stack.SplitDeckAtPos(b.cursorPos); newStack != nil {
@@ -207,6 +225,13 @@ func (b *Board) MouseDown() {
 }
 
 func (b *Board) MouseUp() {
+	// If there is an ongoing animation, ignore the mouse up event
+	if b.runningAnimation != nil {
+		log.Println("Ignoring mouse up event, animation is running.")
+		return
+	}
+
+	// If no card is held, ignore the mouse up event
 	if b.heldCardStack == nil {
 		log.Println("No card held, ignoring mouse up event.")
 		return
@@ -295,9 +320,12 @@ func (b *Board) MouseUp() {
 
 	// No stack was dropped onto, so reset the held stack
 	log.Println("No stack found to drop the held card onto, resetting held card stack.")
-	b.heldCardResetStack.AppendStack(b.heldCardStack)
-
-	// Remove held card stack state
-	b.heldCardStack = nil
-	b.heldCardResetStack = nil
+	b.runningAnimation = b.heldCardStack.CreateAnimationToPos(
+		b.heldCardResetStack.GetNextCardPos(),
+		func() {
+			b.heldCardResetStack.AppendStack(b.heldCardStack)
+			b.heldCardStack = nil
+			b.heldCardResetStack = nil
+		},
+	)
 }

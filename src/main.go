@@ -23,6 +23,10 @@ func (g *Game) Init() {
 }
 
 func (g *Game) Update() error {
+	// Update the game board with any non-interactive logic
+	g.board.Update()
+
+	// Handle mouse input
 	pos := util.MakePosFromTuple(ebiten.CursorPosition())
 	g.board.SetCusrorPos(pos)
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -30,6 +34,7 @@ func (g *Game) Update() error {
 	} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		g.board.MouseUp()
 	}
+
 	return nil
 }
 

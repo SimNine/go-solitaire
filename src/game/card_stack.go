@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"urffer.xyz/go-solitaire/src/animation"
 	"urffer.xyz/go-solitaire/src/util"
 )
 
@@ -22,7 +23,8 @@ func InitCardStackBkg() {
 }
 
 type CardStack struct {
-	Cards    []*Card
+	Cards []*Card
+
 	basePos  util.Pos
 	isSpread bool
 }
@@ -58,6 +60,14 @@ func (c *CardStack) Draw(screen *ebiten.Image) {
 func (c *CardStack) TranslateTo(pos util.Pos) {
 	// Translate the base position of the stack to a new position
 	c.basePos = pos
+
+	// Fix the positions of all cards in the stack
+	c.repositionCards()
+}
+
+func (c *CardStack) TranslateBy(delta util.Pos) {
+	// Translate the base position of the stack by a delta
+	c.basePos = c.basePos.TranslatePos(delta)
 
 	// Fix the positions of all cards in the stack
 	c.repositionCards()
@@ -120,6 +130,38 @@ func (c *CardStack) Shuffle() {
 
 	// Reposition cards after shuffling
 	c.repositionCards()
+}
+
+func (c *CardStack) GetNextCardPos() util.Pos {
+	// Get the position of the next card in the stack
+	if len(c.Cards) == 0 {
+		return c.basePos // Return base position if no cards are present
+	}
+
+	if c.isSpread {
+		return c.GetTopCard().pos.Translate(0, DEFAULT_CARD_INTERPILE_SPACING)
+	} else {
+		return c.basePos
+	}
+}
+
+func (c *CardStack) CreateAnimationToPos(targetPos util.Pos, onFinishAction func()) *animation.Animation {
+	log.Println("Creating animation from position to position:", c.basePos, targetPos)
+
+	// Create an animation to move the stack to a target position
+	a := &animation.Animation{
+		StartingPos:    c.basePos,
+		TargetPos:      targetPos,
+		OnFinishAction: onFinishAction,
+		CurrPos: func() util.Pos {
+			return c.basePos
+		},
+	}
+	a.Update = func() {
+		delta := a.UnitDelta()
+		c.TranslateBy(delta)
+	}
+	return a
 }
 
 func (c *CardStack) repositionCards() {
