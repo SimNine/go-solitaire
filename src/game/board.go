@@ -3,7 +3,6 @@ package game
 import (
 	"image/color"
 	"log"
-	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"urffer.xyz/go-solitaire/src/util"
@@ -23,64 +22,56 @@ var POS_OVERTURNED_PILE = POS_DRAW_PILE.Translate(
 
 func NewBoard() *Board {
 	// Create a deck of cards
-	deck := []*Card{}
+	deck := &CardStack{
+		Cards:    []*Card{},
+		basePos:  POS_DRAW_PILE,
+		isSpread: false,
+	}
 	for _, suit := range []Suit{Heart, Diamond, Club, Spade} {
 		for _, number := range []Number{Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King} {
-			deck = append(deck, MakeCard(number, suit))
+			deck.AppendCard(MakeCard(number, suit))
 		}
 	}
 
 	// Shuffle the deck
-	for i := len(deck) - 1; i > 0; i-- {
-		j := rand.Intn(i + 1)
-		deck[i], deck[j] = deck[j], deck[i]
-	}
+	deck.Shuffle()
 
 	// Distribute the cards into the working stacks
 	workingStacks := [7]*CardStack{}
 	for i := 0; i < 7; i++ {
-		currStack := &[]*Card{}
-		for j := 0; j <= i; j++ {
-			var card *Card
-			card, deck = deck[0], deck[1:]
-			card.IsShown = false
-			*currStack = append(*currStack, card)
-		}
 		workingStacks[i] = &CardStack{
-			Cards:    *currStack,
-			IsSpread: true,
-			BasePos: POS_DRAW_PILE.Translate(
+			isSpread: true,
+			basePos: POS_DRAW_PILE.Translate(
 				i*(DEFAULT_CARD_SPACING+DEFAULT_CARD_WIDTH),
 				DEFAULT_CARD_HEIGHT+DEFAULT_CARD_SPACING,
 			),
 		}
+		for j := 0; j <= i; j++ {
+			cardstack := deck.splitDeckAtIndex(len(deck.Cards) - 1)
+			card := cardstack.GetTopCard()
+			card.IsShown = false
+			workingStacks[i].AppendCard(card)
+		}
 		workingStacks[i].GetTopCard().IsShown = true
-		workingStacks[i].BasePos = util.Pos{
+		workingStacks[i].TranslateTo(util.Pos{
 			X: DEFAULT_CARD_SPACING + i*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
 			Y: DEFAULT_CARD_SPACING + DEFAULT_CARD_HEIGHT + DEFAULT_CARD_SPACING,
-		}
-		workingStacks[i].repositionCards()
+		})
 	}
 
 	// Put the rest of the deck into the draw pile
-	drawPileCards := deck
-	for _, card := range drawPileCards {
-		card.pos = POS_DRAW_PILE
-		card.IsShown = false
-	}
-	drawPile := &CardStack{
-		Cards:    drawPileCards,
-		IsSpread: false,
-		BasePos:  POS_DRAW_PILE,
-	}
+	drawPile := deck
+	drawPile.TranslateTo(POS_DRAW_PILE)
+	drawPile.SetSpread(false)
+	drawPile.SetAllShown(false)
 
 	// Create empty suit piles
 	suitPiles := [4]*CardStack{}
 	for i := 0; i < 4; i++ {
 		suitPiles[i] = &CardStack{
 			Cards:    []*Card{},
-			IsSpread: false, // Suit piles only show the top card
-			BasePos: POS_OVERTURNED_PILE.Translate(
+			isSpread: false, // Suit piles only show the top card
+			basePos: POS_OVERTURNED_PILE.Translate(
 				(2+i)*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
 				0,
 			),
@@ -94,8 +85,8 @@ func NewBoard() *Board {
 		drawPile:      drawPile,
 		overturnedPile: &CardStack{
 			Cards:    []*Card{},
-			IsSpread: false,
-			BasePos:  POS_OVERTURNED_PILE,
+			isSpread: false,
+			basePos:  POS_OVERTURNED_PILE,
 		},
 	}
 }
@@ -163,7 +154,7 @@ func (b *Board) MouseDown() {
 				log.Println("Sub-stack picked up")
 				b.heldCardStack = newStack
 				b.heldCardResetStack = stack
-				b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
+				b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
 			}
 			return
 		}
@@ -175,7 +166,7 @@ func (b *Board) MouseDown() {
 			log.Println("Card grabbed from suit pile:", newStack)
 			b.heldCardStack = newStack
 			b.heldCardResetStack = stack
-			b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
+			b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
 			return
 		}
 	}
@@ -188,7 +179,7 @@ func (b *Board) MouseDown() {
 				b.heldCardStack = newStack
 				b.heldCardStack.Cards[0].IsShown = true
 				b.heldCardResetStack = b.overturnedPile
-				b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
+				b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
 				return
 			}
 		} else if topCard == nil {
@@ -196,9 +187,7 @@ func (b *Board) MouseDown() {
 				b.overturnedPile.Reverse()
 				replenishStack := b.overturnedPile.splitDeckAtIndex(0)
 				b.drawPile.AppendStack(replenishStack)
-				for _, card := range b.drawPile.Cards {
-					card.IsShown = false
-				}
+				b.drawPile.SetAllShown(false)
 			}
 		}
 	}
@@ -209,7 +198,7 @@ func (b *Board) MouseDown() {
 		if newStack := b.overturnedPile.SplitDeckAtPos(b.cursorPos); newStack != nil {
 			b.heldCardStack = newStack
 			b.heldCardResetStack = b.overturnedPile
-			b.heldCardOffset = b.heldCardStack.BasePos.Sub(b.cursorPos)
+			b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
 			return
 		}
 	}
@@ -233,7 +222,7 @@ func (b *Board) MouseUp() {
 		if topCard == nil {
 			if b.heldCardStack.Cards[0].Number == King {
 				// See if the stack contains the cursor position. If so, append stacks
-				if (&Card{pos: stack.BasePos}).Contains(b.cursorPos) {
+				if (&Card{pos: stack.basePos}).Contains(b.cursorPos) {
 					log.Println("Card dropped onto working stack:", stack)
 					stack.AppendStack(b.heldCardStack)
 					if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
@@ -277,7 +266,7 @@ func (b *Board) MouseUp() {
 		cardCanBePlaced := false
 		if topCard == nil {
 			if b.heldCardStack.Cards[0].Number == Ace {
-				if (&Card{pos: stack.BasePos}).Contains(b.cursorPos) {
+				if (&Card{pos: stack.basePos}).Contains(b.cursorPos) {
 					cardCanBePlaced = true
 					log.Println("Card dropped onto suit pile:", stack)
 				}
