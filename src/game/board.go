@@ -249,12 +249,17 @@ func (b *Board) MouseUp() {
 				// See if the stack contains the cursor position. If so, append stacks
 				if (&Card{pos: stack.basePos}).Contains(b.cursorPos.ToFloatPos()) {
 					log.Println("Card dropped onto working stack:", stack)
-					stack.AppendStack(b.heldCardStack)
 					if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
 						newTopCard.IsShown = true
 					}
-					b.heldCardStack = nil
-					b.heldCardResetStack = nil
+					b.runningAnimation = b.heldCardStack.CreateAnimationToPos(
+						stack.GetNextCardPos(),
+						func() {
+							stack.AppendStack(b.heldCardStack)
+							b.heldCardStack = nil
+							b.heldCardResetStack = nil
+						},
+					)
 					return
 				}
 			}
@@ -263,12 +268,17 @@ func (b *Board) MouseUp() {
 				b.heldCardStack.Cards[0].Number.IsOneLessThan(topCard.Number) {
 				if topCard.Contains(b.cursorPos.ToFloatPos()) {
 					log.Println("Card dropped onto working stack:", stack)
-					stack.AppendStack(b.heldCardStack)
 					if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
 						newTopCard.IsShown = true
 					}
-					b.heldCardStack = nil
-					b.heldCardResetStack = nil
+					b.runningAnimation = b.heldCardStack.CreateAnimationToPos(
+						stack.GetNextCardPos(),
+						func() {
+							stack.AppendStack(b.heldCardStack)
+							b.heldCardStack = nil
+							b.heldCardResetStack = nil
+						},
+					)
 					return
 				}
 			}
@@ -308,12 +318,17 @@ func (b *Board) MouseUp() {
 		// If the card can be placed, do stuff
 		if cardCanBePlaced {
 			log.Println("Card dropped onto suit pile:", stack)
-			stack.AppendStack(b.heldCardStack)
 			if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
 				newTopCard.IsShown = true
 			}
-			b.heldCardStack = nil
-			b.heldCardResetStack = nil
+			b.runningAnimation = b.heldCardStack.CreateAnimationToPos(
+				stack.GetNextCardPos(),
+				func() {
+					stack.AppendStack(b.heldCardStack)
+					b.heldCardStack = nil
+					b.heldCardResetStack = nil
+				},
+			)
 			return
 		}
 	}
