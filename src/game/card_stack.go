@@ -25,7 +25,7 @@ func InitCardStackBkg() {
 type CardStack struct {
 	Cards []*Card
 
-	basePos  util.Pos
+	basePos  util.Pos[float64]
 	isSpread bool
 }
 
@@ -52,12 +52,12 @@ func (c *CardStack) Draw(screen *ebiten.Image) {
 	if len(c.Cards) == 0 {
 		// Draw a placeholder for the base of the stack
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(c.basePos.ToFloatTuple())
+		op.GeoM.Translate(c.basePos.ToTuple())
 		screen.DrawImage(placeholderImage, op)
 	}
 }
 
-func (c *CardStack) TranslateTo(pos util.Pos) {
+func (c *CardStack) TranslateTo(pos util.Pos[float64]) {
 	// Translate the base position of the stack to a new position
 	c.basePos = pos
 
@@ -65,7 +65,7 @@ func (c *CardStack) TranslateTo(pos util.Pos) {
 	c.repositionCards()
 }
 
-func (c *CardStack) TranslateBy(delta util.Pos) {
+func (c *CardStack) TranslateBy(delta util.Pos[float64]) {
 	// Translate the base position of the stack by a delta
 	c.basePos = c.basePos.TranslatePos(delta)
 
@@ -132,7 +132,7 @@ func (c *CardStack) Shuffle() {
 	c.repositionCards()
 }
 
-func (c *CardStack) GetNextCardPos() util.Pos {
+func (c *CardStack) GetNextCardPos() util.Pos[float64] {
 	// Get the position of the next card in the stack
 	if len(c.Cards) == 0 {
 		return c.basePos // Return base position if no cards are present
@@ -145,7 +145,7 @@ func (c *CardStack) GetNextCardPos() util.Pos {
 	}
 }
 
-func (c *CardStack) CreateAnimationToPos(targetPos util.Pos, onFinishAction func()) *animation.Animation {
+func (c *CardStack) CreateAnimationToPos(targetPos util.Pos[float64], onFinishAction func()) *animation.Animation {
 	log.Println("Creating animation from position to position:", c.basePos, targetPos)
 
 	// Create an animation to move the stack to a target position
@@ -153,7 +153,7 @@ func (c *CardStack) CreateAnimationToPos(targetPos util.Pos, onFinishAction func
 		StartingPos:    c.basePos,
 		TargetPos:      targetPos,
 		OnFinishAction: onFinishAction,
-		CurrPos: func() util.Pos {
+		CurrPos: func() util.Pos[float64] {
 			return c.basePos
 		},
 	}
@@ -168,7 +168,7 @@ func (c *CardStack) repositionCards() {
 	// Reposition all cards in the stack based on the base position
 	for i, card := range c.Cards {
 		if c.isSpread {
-			card.pos = c.basePos.Translate(0, i*DEFAULT_CARD_INTERPILE_SPACING)
+			card.pos = c.basePos.Translate(0, float64(i*DEFAULT_CARD_INTERPILE_SPACING))
 		} else {
 			card.pos = c.basePos
 		}
@@ -191,7 +191,7 @@ func (c *CardStack) splitDeckAtIndex(index int) *CardStack {
 	return newStack
 }
 
-func (c *CardStack) SplitDeckAtPos(pos util.Pos) *CardStack {
+func (c *CardStack) SplitDeckAtPos(pos util.Pos[float64]) *CardStack {
 	// Find the index of the card that contains the given position
 	for i, card := range c.Cards {
 		if card.Contains(pos) {
@@ -209,7 +209,7 @@ func (c *CardStack) SplitDeckAtPos(pos util.Pos) *CardStack {
 	return nil // No card found at the given position
 }
 
-func (c *CardStack) BaseCardContains(pos util.Pos) bool {
+func (c *CardStack) BaseCardContains(pos util.Pos[float64]) bool {
 	// Check if the base position of the stack contains the given position
 	return pos.X >= c.basePos.X && pos.X <= c.basePos.X+DEFAULT_CARD_WIDTH &&
 		pos.Y >= c.basePos.Y && pos.Y <= c.basePos.Y+DEFAULT_CARD_HEIGHT

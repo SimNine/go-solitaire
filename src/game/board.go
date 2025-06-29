@@ -12,7 +12,7 @@ import (
 const DEFAULT_CARD_SPACING = 10
 const DEFAULT_CARD_INTERPILE_SPACING = 20
 
-var POS_DRAW_PILE = util.Pos{
+var POS_DRAW_PILE = util.Pos[float64]{
 	X: DEFAULT_CARD_SPACING,
 	Y: DEFAULT_CARD_SPACING,
 }
@@ -43,8 +43,8 @@ func NewBoard() *Board {
 		workingStacks[i] = &CardStack{
 			isSpread: true,
 			basePos: POS_DRAW_PILE.Translate(
-				i*(DEFAULT_CARD_SPACING+DEFAULT_CARD_WIDTH),
-				DEFAULT_CARD_HEIGHT+DEFAULT_CARD_SPACING,
+				float64(i*(DEFAULT_CARD_SPACING+DEFAULT_CARD_WIDTH)),
+				float64(DEFAULT_CARD_HEIGHT+DEFAULT_CARD_SPACING),
 			),
 		}
 		for j := 0; j <= i; j++ {
@@ -54,9 +54,9 @@ func NewBoard() *Board {
 			workingStacks[i].AppendCard(card)
 		}
 		workingStacks[i].GetTopCard().IsShown = true
-		workingStacks[i].TranslateTo(util.Pos{
-			X: DEFAULT_CARD_SPACING + i*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
-			Y: DEFAULT_CARD_SPACING + DEFAULT_CARD_HEIGHT + DEFAULT_CARD_SPACING,
+		workingStacks[i].TranslateTo(util.Pos[float64]{
+			X: float64(DEFAULT_CARD_SPACING + i*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING)),
+			Y: float64(DEFAULT_CARD_SPACING + DEFAULT_CARD_HEIGHT + DEFAULT_CARD_SPACING),
 		})
 	}
 
@@ -73,7 +73,7 @@ func NewBoard() *Board {
 			Cards:    []*Card{},
 			isSpread: false, // Suit piles only show the top card
 			basePos: POS_OVERTURNED_PILE.Translate(
-				(2+i)*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING),
+				float64((2+i)*(DEFAULT_CARD_WIDTH+DEFAULT_CARD_SPACING)),
 				0,
 			),
 		}
@@ -100,9 +100,9 @@ type Board struct {
 
 	heldCardStack      *CardStack
 	heldCardResetStack *CardStack
-	heldCardOffset     util.Pos
+	heldCardOffset     util.Pos[int]
 
-	cursorPos util.Pos
+	cursorPos util.Pos[int]
 
 	runningAnimation *animation.Animation
 }
@@ -147,11 +147,11 @@ func (b *Board) Update() {
 			b.runningAnimation = nil // Clear the running animation
 		}
 	} else if b.heldCardStack != nil {
-		b.heldCardStack.TranslateTo(b.cursorPos.TranslatePos(b.heldCardOffset))
+		b.heldCardStack.TranslateTo(b.cursorPos.TranslatePos(b.heldCardOffset).ToFloatPos())
 	}
 }
 
-func (b *Board) SetCusrorPos(pos util.Pos) {
+func (b *Board) SetCusrorPos(pos util.Pos[int]) {
 	b.cursorPos = pos
 }
 
@@ -164,7 +164,7 @@ func (b *Board) MouseDown() {
 
 	// Try picking cards up from one of the working stacks
 	for _, stack := range b.workingStacks {
-		if newStack := stack.SplitDeckAtPos(b.cursorPos); newStack != nil {
+		if newStack := stack.SplitDeckAtPos(b.cursorPos.ToFloatPos()); newStack != nil {
 			if !newStack.Cards[0].IsShown {
 				log.Println("Cannot pick up a stack of cards where the bottom card is not shown.")
 				stack.AppendStack(newStack)
@@ -172,7 +172,7 @@ func (b *Board) MouseDown() {
 				log.Println("Sub-stack picked up")
 				b.heldCardStack = newStack
 				b.heldCardResetStack = stack
-				b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
+				b.heldCardOffset = b.heldCardStack.basePos.ToIntPos().Sub(b.cursorPos)
 			}
 			return
 		}
@@ -180,24 +180,24 @@ func (b *Board) MouseDown() {
 
 	// Try picking cards up from one of the suit piles
 	for _, stack := range b.suitPiles {
-		if newStack := stack.SplitDeckAtPos(b.cursorPos); newStack != nil {
+		if newStack := stack.SplitDeckAtPos(b.cursorPos.ToFloatPos()); newStack != nil {
 			log.Println("Card grabbed from suit pile:", newStack)
 			b.heldCardStack = newStack
 			b.heldCardResetStack = stack
-			b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
+			b.heldCardOffset = b.heldCardStack.basePos.ToIntPos().Sub(b.cursorPos)
 			return
 		}
 	}
 
 	// Try picking a card up from the draw pile
-	if b.drawPile.BaseCardContains(b.cursorPos) {
+	if b.drawPile.BaseCardContains(b.cursorPos.ToFloatPos()) {
 		if topCard := b.drawPile.GetTopCard(); topCard != nil {
 			log.Println("Card grabbed from draw pile")
-			if newStack := b.drawPile.SplitDeckAtPos(b.cursorPos); newStack != nil {
+			if newStack := b.drawPile.SplitDeckAtPos(b.cursorPos.ToFloatPos()); newStack != nil {
 				b.heldCardStack = newStack
 				b.heldCardStack.Cards[0].IsShown = true
 				b.heldCardResetStack = b.overturnedPile
-				b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
+				b.heldCardOffset = b.heldCardStack.basePos.ToIntPos().Sub(b.cursorPos)
 				return
 			}
 		} else if topCard == nil {
@@ -211,12 +211,12 @@ func (b *Board) MouseDown() {
 	}
 
 	// Try picking a card up from the overturned pile
-	if topCard := b.overturnedPile.GetTopCard(); topCard != nil && topCard.Contains(b.cursorPos) {
+	if topCard := b.overturnedPile.GetTopCard(); topCard != nil && topCard.Contains(b.cursorPos.ToFloatPos()) {
 		log.Println("Card grabbed from overturned pile")
-		if newStack := b.overturnedPile.SplitDeckAtPos(b.cursorPos); newStack != nil {
+		if newStack := b.overturnedPile.SplitDeckAtPos(b.cursorPos.ToFloatPos()); newStack != nil {
 			b.heldCardStack = newStack
 			b.heldCardResetStack = b.overturnedPile
-			b.heldCardOffset = b.heldCardStack.basePos.Sub(b.cursorPos)
+			b.heldCardOffset = b.heldCardStack.basePos.ToIntPos().Sub(b.cursorPos)
 			return
 		}
 	}
@@ -247,7 +247,7 @@ func (b *Board) MouseUp() {
 		if topCard == nil {
 			if b.heldCardStack.Cards[0].Number == King {
 				// See if the stack contains the cursor position. If so, append stacks
-				if (&Card{pos: stack.basePos}).Contains(b.cursorPos) {
+				if (&Card{pos: stack.basePos}).Contains(b.cursorPos.ToFloatPos()) {
 					log.Println("Card dropped onto working stack:", stack)
 					stack.AppendStack(b.heldCardStack)
 					if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
@@ -261,7 +261,7 @@ func (b *Board) MouseUp() {
 		} else {
 			if topCard.Suit.IsOppositeColor(b.heldCardStack.Cards[0].Suit) &&
 				b.heldCardStack.Cards[0].Number.IsOneLessThan(topCard.Number) {
-				if topCard.Contains(b.cursorPos) {
+				if topCard.Contains(b.cursorPos.ToFloatPos()) {
 					log.Println("Card dropped onto working stack:", stack)
 					stack.AppendStack(b.heldCardStack)
 					if newTopCard := b.heldCardResetStack.GetTopCard(); newTopCard != nil {
@@ -291,7 +291,7 @@ func (b *Board) MouseUp() {
 		cardCanBePlaced := false
 		if topCard == nil {
 			if b.heldCardStack.Cards[0].Number == Ace {
-				if (&Card{pos: stack.basePos}).Contains(b.cursorPos) {
+				if (&Card{pos: stack.basePos}).Contains(b.cursorPos.ToFloatPos()) {
 					cardCanBePlaced = true
 					log.Println("Card dropped onto suit pile:", stack)
 				}
@@ -299,7 +299,7 @@ func (b *Board) MouseUp() {
 		} else {
 			if b.heldCardStack.Cards[0].Suit == topCard.Suit &&
 				b.heldCardStack.Cards[0].Number.IsOneMoreThan(topCard.Number) {
-				if topCard.Contains(b.cursorPos) {
+				if topCard.Contains(b.cursorPos.ToFloatPos()) {
 					cardCanBePlaced = true
 				}
 			}

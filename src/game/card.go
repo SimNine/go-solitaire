@@ -134,7 +134,7 @@ type Card struct {
 	IsShown bool
 
 	image *ebiten.Image
-	pos   util.Pos
+	pos   util.Pos[float64]
 }
 
 func MakeCard(
@@ -203,7 +203,7 @@ func MakeCard(
 		IsShown: true,
 		image:   image,
 
-		pos: util.Pos{X: 50, Y: 100},
+		pos: util.Pos[float64]{X: 50, Y: 100},
 	}
 }
 
@@ -222,7 +222,7 @@ func (c *Card) String() string {
 	return NumberSymbols[c.Number] + SuitSymbols[c.Suit]
 }
 
-func (c *Card) Contains(pos util.Pos) bool {
+func (c *Card) Contains(pos util.Pos[float64]) bool {
 	return pos.X >= c.pos.X && pos.X <= c.pos.X+DEFAULT_CARD_WIDTH &&
 		pos.Y >= c.pos.Y && pos.Y <= c.pos.Y+DEFAULT_CARD_HEIGHT
 }

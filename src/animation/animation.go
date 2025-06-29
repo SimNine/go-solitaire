@@ -5,14 +5,14 @@ import (
 )
 
 type Animation struct {
-	StartingPos    util.Pos
-	TargetPos      util.Pos
-	CurrPos        func() util.Pos
+	StartingPos    util.Pos[float64]
+	TargetPos      util.Pos[float64]
+	CurrPos        func() util.Pos[float64]
 	OnFinishAction func()
 	Update         func()
 }
 
-func (a *Animation) UnitDelta() util.Pos {
+func (a *Animation) UnitDelta() util.Pos[float64] {
 	delta := a.TargetPos.Sub(a.CurrPos())
 	if delta.X > 0 {
 		delta.X = 1
