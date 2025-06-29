@@ -13,18 +13,9 @@ type Animation struct {
 }
 
 func (a *Animation) UnitDelta() util.Pos[float64] {
-	delta := a.TargetPos.Sub(a.CurrPos())
-	if delta.X > 0 {
-		delta.X = 1
-	} else if delta.X < 0 {
-		delta.X = -1
+	fullDelta := a.TargetPos.Sub(a.StartingPos)
+	return util.Pos[float64]{
+		X: fullDelta.X / 100.0,
+		Y: fullDelta.Y / 100.0,
 	}
-
-	if delta.Y > 0 {
-		delta.Y = 1
-	} else if delta.Y < 0 {
-		delta.Y = -1
-	}
-
-	return delta
 }

@@ -1,5 +1,7 @@
 package util
 
+import "math"
+
 type Number interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64
 }
@@ -41,6 +43,11 @@ func (p Pos[N]) Sub(other Pos[N]) Pos[N] {
 
 func (p Pos[N]) Eq(other Pos[N]) bool {
 	return p.X == other.X && p.Y == other.Y
+}
+
+func (p Pos[N]) AlmostEq(other Pos[N], epsilon N) bool {
+	return math.Abs(float64(p.X-other.X)) < float64(epsilon) &&
+		math.Abs(float64(p.Y-other.Y)) < float64(epsilon)
 }
 
 func (p Pos[N]) ToFloatPos() Pos[float64] {

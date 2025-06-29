@@ -141,7 +141,7 @@ func (b *Board) Draw(screen *ebiten.Image) {
 func (b *Board) Update() {
 	if b.runningAnimation != nil {
 		b.runningAnimation.Update()
-		if b.runningAnimation.CurrPos().Eq(b.runningAnimation.TargetPos) {
+		if b.runningAnimation.CurrPos().AlmostEq(b.runningAnimation.TargetPos, 0.01) {
 			// Animation finished, call the finish action
 			b.runningAnimation.OnFinishAction()
 			b.runningAnimation = nil // Clear the running animation
