@@ -21,6 +21,12 @@ func (a *Animation) UnitDelta() util.Pos[float64] {
 
 	// Set the current velocity based on the ratio of the current delta to the full delta, scaled by the base velocity
 	a.currVelocity = (currDelta.X / fullDelta.X) * a.BaseVelocity
+	if a.currVelocity > a.BaseVelocity {
+		a.currVelocity = a.BaseVelocity
+	}
+	if a.currVelocity < 0 {
+		a.currVelocity = 0
+	}
 
 	// Compute the step size based on the current velocity and the full delta
 	return util.Pos[float64]{

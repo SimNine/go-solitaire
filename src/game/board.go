@@ -142,9 +142,8 @@ func (b *Board) Update() {
 	if b.runningAnimation != nil {
 		b.runningAnimation.Update()
 		if b.runningAnimation.CurrPos().AlmostEq(b.runningAnimation.TargetPos, 0.01) {
-			// Animation finished, call the finish action
 			b.runningAnimation.OnFinishAction()
-			b.runningAnimation = nil // Clear the running animation
+			b.runningAnimation = nil
 		}
 	} else if b.heldCardStack != nil {
 		b.heldCardStack.TranslateTo(b.cursorPos.TranslatePos(b.heldCardOffset).ToFloatPos())
