@@ -96,6 +96,8 @@ func InitCardsAssets() {
 		Three: "assets/num_3.png",
 		Four:  "assets/num_4.png",
 		Five:  "assets/num_5.png",
+		Six:   "assets/num_6.png",
+		Seven: "assets/num_7.png",
 	}
 	for number, imagePath := range numberImagePaths {
 		image, err := util.LoadEbitenImageFromFile(imagePath)
@@ -112,7 +114,7 @@ func InitCardsAssets() {
 
 	// Generate remaining number images
 	for _, number := range []Number{
-		Six, Seven, Eight, Nine, Ten, Jack, Queen, King,
+		Eight, Nine, Ten, Jack, Queen, King,
 	} {
 		numberSymbol := NumberSymbols[number]
 		numberOps := &text.DrawOptions{}
